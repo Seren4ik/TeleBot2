@@ -3,10 +3,10 @@ import psycopg2
 
 """Подключение к базе данных"""
 con = psycopg2.connect(
-    database="postgres",
-    user="postgres",
-    password="664acdc997/1",
-    host="localhost",
+    database="dcjb1qat671637",
+    user="dvhyumkmxxkpch",
+    password="70821ee62bbcf15bbe02e983f761eb24939ebcf43c7966e4767ff0bbe83f8c92",
+    host="ec2-54-217-204-34.eu-west-1.compute.amazonaws.com",
     port="5432")
 
 
@@ -82,10 +82,10 @@ def date(first_name):
 
 
 if __name__ == '__main__':
-    #init_db()
+    init_db()
     #delete_message("1109-Столб навигации Вега")
 
-    print(list_message("Sergey"))
+    #print(list_message("Sergey"))
     #print(message("Sergey"))
 
     con.close()
