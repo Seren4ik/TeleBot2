@@ -5,7 +5,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from config import TOKEN
 import asyncio
 import keyboard as kb
-from validate import validate_answer
+from valid_time import valid, valid2
+from valid_start_project import valid_start
 import Db1
 from States_group import drink
 from Group_project import project
@@ -61,7 +62,7 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['start_project'],state=None)
 async def start_project(message: types.Message):
     """Начать проект"""
-    await message.answer("<b>Вы начали проект. Введите артикул и название: </b>")
+    await message.answer("<b>Вы начали проект. Введите артикул и название в формате(Артикул-название): </b>")
     await project.next()
 
 
@@ -80,13 +81,12 @@ async def start_project1(message: types.Message, state: FSMContext):
     """Второй вопрос, завершение опроса, сохранение данных в базу"""
     user = message.from_user.id
     user2 = message.from_user.full_name
-    start_project = (message.text).split("-")
+    start_project = valid_start(message.text)
+    if start_project == "Не правильный формат":
+        await message.reply("<b>Не правильный формат, введите через (-)</b>")
+        return start_project
     code_name = start_project[0]
     project_name = start_project[1]
-    if start_project is None:
-        await message.reply("<b>Введи текст или нажмите /cancel:</b>")
-        return start_project
-    await state.update_data(start_project=start_project)
     projects = Db1.list_message("Sergey")
     text_and = ("-")
     time_and = ("-")
@@ -96,6 +96,7 @@ async def start_project1(message: types.Message, state: FSMContext):
             p.append(i[1])
 
     if len(p) == 0:
+        await state.update_data(start_project=start_project)
         Db1.add_message(
             user_id=user,
             first_name=user2,
@@ -107,8 +108,9 @@ async def start_project1(message: types.Message, state: FSMContext):
         )
         await message.answer(f"<b>Вы начали проект: {('-').join(start_project)} </b>")
         await state.finish()
-    else: await message.answer(f"<b>Проект с таким артикулом уже есть: {code_name}. Начните заново</b>")
-    await state.finish()
+    else: await message.answer(f"<b>Проект с таким артикулом уже есть: {code_name}</b>")
+    return start_project
+
 
 
 """______________________Сохранение окончания проекта_________________________________________________________________"""
@@ -133,19 +135,9 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 async def and_project1(message: types.Message, state: FSMContext):
     """Второй вопрос, завершение опроса, сохранение данных в базу"""
     projects = Db1.list_message("Sergey")
-    code_name = (message.text)
-    if code_name is None:
-        await message.reply("<b>Введи текст или нажмите /cancel:</b>")
-        return code_name
-    await state.update_data(code_name=code_name)
     time_and = time_3()
     text_and = "Завершен"
-
-    Db1.update_data(
-        code_name=code_name,
-        text_and=text_and,
-        time_and=time_and
-    )
+    code_name = message.text
     p = []
     for i in projects:
         if i[1] == code_name:
@@ -153,8 +145,17 @@ async def and_project1(message: types.Message, state: FSMContext):
 
     if len(p) > 0:
         await message.answer(f"<b>Вы закончили проект: {code_name} </b>")
+        await state.update_data(code_name=code_name)
+
+        Db1.update_data(
+            code_name=code_name,
+            text_and=text_and,
+            time_and=time_and
+        )
+        await state.finish()
     else: await message.answer(f"<b>Артикул не обнаружен: {code_name} </b>")
-    await state.finish()
+    return code_name
+
 
 """______________________Посмотреть проекты_________________________________________________________________"""
 
@@ -163,8 +164,11 @@ async def view_projects(message: types.Message):
     """Посмотреть проекты"""
     projects = Db1.list_message("Sergey")
     #await message.answer(projects)
+    count_projects = 0
     for i in projects:
+        count_projects += 1
         await message.answer(f"<b>{i}</b>")
+    await message.answer(f"<b>Количество проектов: {count_projects}</b>")
 
 """__________________________Напоминания________________________________________________________________"""
 
@@ -191,7 +195,7 @@ async def reminders(message: types.Message, state: FSMContext):
     if answer3 is None:
         await message.reply("<b>Введи текст или нажмите /cancel:</b>")
         return answer3
-    await message.reply("<b>Укажите периодичность в формате (Ч:М:С)</b> ")
+    await message.reply("<b>Укажите временной промежуток и кол-во повторений в формате:(Ч.М.С-X)</b>")
     await state.update_data(answer3=answer3)
     await drink.next()
 
@@ -200,29 +204,32 @@ async def reminders(message: types.Message, state: FSMContext):
     """Достать переменые"""
     data = await state.get_data()
     answer3 = data.get("answer3")
-    answer4 = validate_answer(message.text)
-    if answer4 is None:
-        await message.reply("Введи число ДЕГЕНЕРАТ, если число дробное - введи его через точку:")
+    answer4 = valid(message.text)
+    answer5 = valid2(message.text)
+    answer6 = message.text.split("-")
+    gap_time = answer6[0]
+    if answer4 == "Не верный формат":
+        await message.reply("<b>Не верный формат!</b>")
         return answer4
-    await message.reply(f"Установлено напоминание:({answer3}), периодичность: {answer4} ")
-    await state.finish()
-
-    time_start = datetime.utcnow() + timedelta(hours=3)
-    while True:
-        time_1()
-        await asyncio.sleep(answer4)
-        time_delta = (time_2() - time_start).total_seconds()
-        #print(time_delta)
-        if time_delta > answer4:
-            await sms(answer3)
+    elif answer5 == "Не верный формат":
+        await message.reply("<b>Не верный формат!</b>")
+        return answer5
+    else:
+        await message.reply(f"<b>Установлено напоминание:{answer3}, промежуток(Ч.М.С): {gap_time}, кол-во повторений:{answer5} </b>")
+        await state.finish()
+        time_start = time_2()
+        for i in range(0, answer5+1):
+            time_2()
+            time_delta = (time_2() - time_start)
+#            print(time_delta)
+            if time_delta > timedelta(seconds=answer4):
+                await sms(answer3)
+            await asyncio.sleep(answer4)
 
 
 @dp.message_handler()
 async def sms(text):
-
     await bot.send_message(chat_id="1268358424",text=f"<b>{text}</b>")
-
-
 
 def main():
     executor.start_polling(
