@@ -101,6 +101,6 @@ def date(first_name):
 if __name__ == '__main__':
     '''init_db()'''
     # delete_message("6007")
-    add_message(1268358424,'Sergey', '10153', 'Скамейка Мечта', '2020.07.27-12:06', 'Завершен', '2020.07.27-12:06')
-    print(list_message("Sergey"))
+    # add_message(1268358424,'Sergey', '10153', 'Скамейка Мечта', '2020.07.27-12:06', 'Завершен', '2020.07.27-12:06')
+    # print(list_message("Sergey"))
     # print(message("Sergey"))
