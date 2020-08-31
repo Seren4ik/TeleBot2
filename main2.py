@@ -10,6 +10,7 @@ from valid_start_project import valid_start
 import Db1
 from States_group import drink
 from Group_project import project
+from Delete_group import delproject
 from datetime import datetime, timedelta
 from time import *
 import logging
@@ -44,10 +45,11 @@ async def send_menu(message: types.Message):
     await message.reply(text='''Мои команды:
                              /start -- запустить бота
                              /help -- увидеть это сообщение
-                             /start_project -- начал проект
-                             /and_project -- закончил проект
-                             /view_projects -- посмотреть проекты
-                             /reminders -- запустить периодичное напоминание
+                             /start_project -- Начать проект 
+                             /and_project -- Закончить проект 
+                             /view_projects -- Посмотреть проекты
+                             /delete_project -- Удалить проект 
+                             /reminders -- Запустить периодичное напоминание
                              /stop -- остановить таймер
                              ''', reply=False, reply_markup=kb.greet_kb)
 
@@ -62,8 +64,8 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['start_project'],state=None)
 async def start_project(message: types.Message):
     """Начать проект"""
-    await message.answer("<b>Вы начали проект. Введите артикул и название в формате(Артикул-название): </b>")
-    await project.next()
+    await message.answer("<b>Вы начинаете проект. Введите артикул и название в формате(Артикул-название): </b>")
+    await project.first()
 
 
 @dp.message_handler(state='*', commands=['cancel'])
@@ -152,6 +154,45 @@ async def and_project1(message: types.Message, state: FSMContext):
             text_and=text_and,
             time_and=time_and
         )
+        await state.finish()
+    else: await message.answer(f"<b>Артикул не обнаружен: {code_name} </b>")
+    return code_name
+
+
+"""______________________Удалить проект_________________________________________________________________"""
+
+@dp.message_handler(commands=['delete_project'],state=None)
+async def delete_project(message: types.Message):
+    """Удалить проект"""
+    await message.answer("<b>Вы хотите удалить проект. Введите артикул: </b>")
+    await delproject.next()
+
+@dp.message_handler(state='*', commands=['cancel'])
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    """Отменить ввод данных"""
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await message.answer('<b>Данные не сохранены</b>')
+    await state.finish()
+
+@dp.message_handler(state=delproject.R1)
+async def delete_project1(message: types.Message, state: FSMContext):
+    """Второй вопрос, завершение опроса, удаление проекта"""
+    projects = Db1.list_message("Sergey")
+    code_name = message.text
+    p = []
+    for i in projects:
+        if i[1] == code_name:
+            p.append(i[1])
+
+    if len(p) > 0:
+        await message.answer(f"<b>Вы удалили проект: {code_name} </b>")
+        await state.update_data(code_name=code_name)
+
+        Db1.delete_message(code_name)
+
         await state.finish()
     else: await message.answer(f"<b>Артикул не обнаружен: {code_name} </b>")
     return code_name

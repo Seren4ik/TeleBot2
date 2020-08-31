@@ -1,15 +1,15 @@
 import psycopg2
 
+
 def connect_db():
     """Подключение к базе данных"""
     con = psycopg2.connect(
-        database="dcjb1qat671637",
-        user="dvhyumkmxxkpch",
-        password="70821ee62bbcf15bbe02e983f761eb24939ebcf43c7966e4767ff0bbe83f8c92",
-        host="ec2-54-217-204-34.eu-west-1.compute.amazonaws.com",
+        database="d5ooudpafo8gka",
+        user="xepxpqywxklads",
+        password="56d9d97426002b5c458acf4847dd36e3c149131255887e0687d875d38b3c102e",
+        host="ec2-107-22-33-173.compute-1.amazonaws.com",
         port="5432")
     return con
-
 
 
 def init_db():
@@ -30,16 +30,19 @@ def init_db():
     con.close()
 
 
-def add_message(user_id: int, first_name: str,code_name:str, text_start: str,time_start: str, text_and: str, time_and: str):
+def add_message(user_id: int, first_name: str, code_name: str, text_start: str, time_start: str, text_and: str,
+                time_and: str):
     """Добавить строку"""
     con = connect_db()
     c = con.cursor()
-    c.execute('INSERT INTO user_project (user_id, first_name, code_name, text_start, time_start, text_and, time_and) VALUES (%s ,%s, %s, %s, %s, %s, %s)',
-              (user_id, first_name,code_name, text_start, time_start, text_and, time_and))
+    c.execute(
+        'INSERT INTO user_project (user_id, first_name, code_name, text_start, time_start, text_and, time_and) VALUES (%s ,%s, %s, %s, %s, %s, %s)',
+        (user_id, first_name, code_name, text_start, time_start, text_and, time_and))
     con.commit()
     con.close()
 
-def update_data(code_name: str,text_and: str,time_and:str):
+
+def update_data(code_name: str, text_and: str, time_and: str):
     """Обновить данные в строке"""
     con = connect_db()
     c = con.cursor()
@@ -47,13 +50,16 @@ def update_data(code_name: str,text_and: str,time_and:str):
               (text_and, time_and, code_name))
     con.commit()
     con.close()
-    #print("Обновлено")
+    # print("Обновлено")
+
 
 def list_message(first_name: str):
     """Показать список все строки данных по имени"""
     con = connect_db()
     c = con.cursor()
-    c.execute('SELECT first_name, code_name, text_start, time_start, text_and, time_and FROM user_project WHERE first_name = %s ', (first_name,))
+    c.execute(
+        'SELECT first_name, code_name, text_start, time_start, text_and, time_and FROM user_project WHERE first_name = %s ',
+        (first_name,))
     return c.fetchall()
 
 
@@ -65,11 +71,12 @@ def quantity_message(first_name: str):
     quantity = c.fetchall()[-5:]
     return quantity
 
+
 def delete_message(code_name: str):
     """Удалить данные по артикулу и назваиню"""
-    con =connect_db()
+    con = connect_db()
     c = con.cursor()
-    c.execute('DELETE from user_project WHERE code_name= %s',(code_name,))
+    c.execute('DELETE from user_project WHERE code_name= %s', (code_name,))
     con.commit()
     con.close()
 
@@ -85,16 +92,15 @@ def message(first_name):
 
 def date(first_name):
     f = list_message(first_name=first_name)
-    #print(f[0])
+    # print(f[0])
     datetime = f[0]
-    #print(datetime[1])
+    # print(datetime[1])
     return datetime[1]
 
 
 if __name__ == '__main__':
-    """init_db()"""
-    #delete_message("111111")
-
-    #print(list_message("Sergey"))
-    #print(message("Sergey"))
-
+    '''init_db()'''
+    # delete_message("6007")
+    add_message(1268358424,'Sergey', '10153', 'Скамейка Мечта', '2020.07.27-12:06', 'Завершен', '2020.07.27-12:06')
+    print(list_message("Sergey"))
+    # print(message("Sergey"))
