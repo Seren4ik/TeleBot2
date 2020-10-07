@@ -58,17 +58,19 @@ def list_message(first_name: str):
     con = connect_db()
     c = con.cursor()
     c.execute(
-        'SELECT first_name, code_name, text_start, time_start, text_and, time_and FROM user_project WHERE first_name = %s ',
+        'SELECT code_name, text_start, time_start, text_and, time_and FROM user_project WHERE first_name = %s ',
         (first_name,))
     return c.fetchall()
 
 
-def quantity_message(first_name: str):
-    """Показать последние 5 строк"""
+def name_message(name):
+    """Показать по названию изделия или по артикулу"""
     con = connect_db()
     c = con.cursor()
-    c.execute('SELECT first_name, time, text_start FROM user_project WHERE first_name= %s', (first_name,))
-    quantity = c.fetchall()[-5:]
+    c.execute(
+        f"SELECT first_name, code_name, text_start, time_start, text_and, time_and FROM user_project where text_start like '%{name}'"
+        f" or code_name like '%{name}' ")
+    quantity = c.fetchall()
     return quantity
 
 
@@ -100,7 +102,9 @@ def date(first_name):
 
 if __name__ == '__main__':
     '''init_db()'''
-    # delete_message("6007")
-    # add_message(1268358424,'Sergey', '10153', 'Скамейка Мечта', '2020.07.27-12:06', 'Завершен', '2020.07.27-12:06')
-    # print(list_message("Sergey"))
+    # delete_message("10046")
+    # add_message(1268358424,'Sergey', '10046', 'Скамейка Урсула', '2020.08.03-12:17', 'Завершен', '2020.08.04-10:44')
+    # projects = list_message("Sergey")
+
+    # print(name_message("Скамейка Урсулa"))
     # print(message("Sergey"))

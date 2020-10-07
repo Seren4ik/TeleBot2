@@ -11,6 +11,7 @@ import Db1
 from States_group import drink
 from Group_project import project
 from Delete_group import delproject
+from Find_group import findproject
 from datetime import datetime, timedelta
 from time import *
 import logging
@@ -39,6 +40,7 @@ def time_3():
     project_time = time.strftime("%Y.%m.%d-%H:%M")
     return(project_time)
 
+
 @dp.message_handler(commands=['help'])
 async def send_menu(message: types.Message):
     """Отправить список команд бота"""
@@ -47,7 +49,8 @@ async def send_menu(message: types.Message):
                              /help -- увидеть это сообщение
                              /start_project -- Начать проект 
                              /and_project -- Закончить проект 
-                             /view_projects -- Посмотреть проекты
+                             /view_projects -- Показать проекты
+                             /find_a_project -- Найти проект по имени или артикулу
                              /delete_project -- Удалить проект 
                              /reminders -- Запустить периодичное напоминание
                              /stop -- остановить таймер
@@ -114,8 +117,8 @@ async def start_project1(message: types.Message, state: FSMContext):
     return start_project
 
 
-
 """______________________Сохранение окончания проекта_________________________________________________________________"""
+
 
 @dp.message_handler(commands=['and_project'],state=None)
 async def and_project(message: types.Message):
@@ -142,8 +145,8 @@ async def and_project1(message: types.Message, state: FSMContext):
     code_name = message.text
     p = []
     for i in projects:
-        if i[1] == code_name:
-            p.append(i[1])
+        if i[0] == code_name:
+            p.append(i[0])
 
     if len(p) > 0:
         await message.answer(f"<b>Вы закончили проект: {code_name} </b>")
@@ -184,8 +187,8 @@ async def delete_project1(message: types.Message, state: FSMContext):
     code_name = message.text
     p = []
     for i in projects:
-        if i[1] == code_name:
-            p.append(i[1])
+        if i[0] == code_name:
+            p.append(i[0])
 
     if len(p) > 0:
         await message.answer(f"<b>Вы удалили проект: {code_name} </b>")
@@ -198,15 +201,63 @@ async def delete_project1(message: types.Message, state: FSMContext):
     return code_name
 
 
+"""______________________Найти проект по имени или артикулу_________________________________________________________________"""
+
+
+@dp.message_handler(commands=['find_a_project'], state=None)
+async def find_a_project(message: types.Message):
+    """Найти проект"""
+    await message.answer("<b>Вы хотите найти проект. Введите артикул или название: </b>")
+    await findproject.next()
+
+
+@dp.message_handler(state='*', commands=['cancel'])
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    """Отменить ввод данных"""
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await message.answer('<b>Данные не сохранены</b>')
+    await state.finish()
+
+
+@dp.message_handler(state=findproject.F1)
+async def find_project1(message: types.Message, state: FSMContext):
+    """Второй вопрос, завершение опроса"""
+    projects = Db1.list_message("Sergey")
+    project1 = message.text
+    p = []
+    for i in projects:
+        if project1 in i[1] or project1 in i[0]:
+            p.append(i)
+
+    if len(p):
+        await message.answer(str(p).strip("[]()"))
+        await state.finish()
+    else: await message.answer("<b>Проект не найден, попробуйте еще раз</b>")
+
+
+
+    # project1 = Db1.name_message(message.text)
+    # if project1:
+    #     await message.answer(f"<b>{project1}</b>")
+    #     await state.finish()
+    # else: await message.answer("<b>Проект не найден</b>")
+    # return project1
+
+
 """______________________Посмотреть проекты_________________________________________________________________"""
+
 
 @dp.message_handler(commands=['view_projects'])
 async def view_projects(message: types.Message):
     """Посмотреть проекты"""
     projects = Db1.list_message("Sergey")
+    projects1 = sorted(projects, key=lambda project2: project2[3])
     #await message.answer(projects)
     count_projects = 0
-    for i in projects:
+    for i in projects1:
         count_projects += 1
         await message.answer(f"<b>{i}</b>")
     await message.answer(f"<b>Количество проектов: {count_projects}</b>")
@@ -229,6 +280,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await message.answer('<b>Данные не сохранены</b>')
     await state.finish()
 
+
 @dp.message_handler(state=drink.Q1)
 async def reminders(message: types.Message, state: FSMContext):
     """Второй вопрос"""
@@ -239,6 +291,7 @@ async def reminders(message: types.Message, state: FSMContext):
     await message.reply("<b>Укажите временной промежуток и кол-во повторений в формате:(Ч.М.С-X)</b>")
     await state.update_data(answer3=answer3)
     await drink.next()
+
 
 @dp.message_handler(state=drink.Q2)
 async def reminders(message: types.Message, state: FSMContext):
