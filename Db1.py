@@ -13,7 +13,7 @@ def connect_db():
 
 
 def init_db():
-    """Открыть курсор дл явыполнения операций с базой данных"""
+    """Открыть курсор для выполнения операций с базой данных"""
     con = connect_db()
     cur = con.cursor()
     """Выполните команду: это создаст новую таблицу"""
@@ -24,20 +24,39 @@ def init_db():
             text_start TEXT NOT NULL,
             time_start TEXT NOT NULL,
             text_and TEXT NOT NULL,
-            time_and TEXT NOT NULL);""")
+            time_and TEXT NOT NULL,
+            note TEXT NOT NULL
+            images TEXT);""")
 
     con.commit()
     con.close()
 
 
-def add_message(user_id: int, first_name: str, code_name: str, text_start: str, time_start: str, text_and: str,
+def add_column():
+    """Добавить колонку в таблицу"""
+    con = connect_db()
+    c = con.cursor()
+    c.execute('ALTER TABLE user_project ALTER COLUMN images TYPE TEXT ')
+    con.commit()
+    con.close()
+
+
+def information():
+    con = connect_db()
+    c = con.cursor()
+    c.execute('SELECT * FROM pg_catalog.pg_tables')
+    return c.fetchall()
+
+
+def add_message(user_id: int, first_name: str, code_name: str, text_start: str, note: str, time_start: str, text_and: str,
                 time_and: str):
     """Добавить строку"""
     con = connect_db()
     c = con.cursor()
     c.execute(
-        'INSERT INTO user_project (user_id, first_name, code_name, text_start, time_start, text_and, time_and) VALUES (%s ,%s, %s, %s, %s, %s, %s)',
-        (user_id, first_name, code_name, text_start, time_start, text_and, time_and))
+        'INSERT INTO user_project (user_id, first_name, code_name, text_start, note, time_start, text_and, time_and)'
+        ' VALUES (%s ,%s, %s, %s, %s, %s, %s, %s )',
+        (user_id, first_name, code_name, text_start, note, time_start, text_and, time_and))
     con.commit()
     con.close()
 
@@ -53,12 +72,32 @@ def update_data(code_name: str, text_and: str, time_and: str):
     # print("Обновлено")
 
 
+def note_data(note: str, code_name: str):
+    """Добавить примечание"""
+    con = connect_db()
+    c = con.cursor()
+    c.execute('UPDATE user_project set note = %s where code_name = %s', (note, code_name))
+    con.commit()
+    con.close()
+    # print("Обновлено")
+
+
+def image_data(image: str, code_name: str):
+    """Добавить картинку"""
+    con = connect_db()
+    c = con.cursor()
+    c.execute('UPDATE user_project set images =%s where code_name = %s', (image, code_name))
+    con.commit()
+    con.close()
+    # print("Обновлено")
+
+
 def list_message(first_name: str):
     """Показать список все строки данных по имени"""
     con = connect_db()
     c = con.cursor()
     c.execute(
-        'SELECT code_name, text_start, time_start, text_and, time_and FROM user_project WHERE first_name = %s ',
+        'SELECT code_name, text_start, time_start, text_and, time_and, note, images FROM user_project WHERE first_name = %s ',
         (first_name,))
     return c.fetchall()
 
@@ -68,7 +107,7 @@ def name_message(name):
     con = connect_db()
     c = con.cursor()
     c.execute(
-        f"SELECT first_name, code_name, text_start, time_start, text_and, time_and FROM user_project where text_start like '%{name}'"
+        f"SELECT code_name, text_start, time_start, text_and, time_and, note, images FROM user_project where text_start like '%{name}'"
         f" or code_name like '%{name}' ")
     quantity = c.fetchall()
     return quantity
@@ -104,7 +143,9 @@ if __name__ == '__main__':
     '''init_db()'''
     # delete_message("10046")
     # add_message(1268358424,'Sergey', '10046', 'Скамейка Урсула', '2020.08.03-12:17', 'Завершен', '2020.08.04-10:44')
-    # projects = list_message("Sergey")
-
-    # print(name_message("Скамейка Урсулa"))
+    # print(list_message("Sergey"))
+    # add_column()
+    # image_data("https://adanatgroup.ru/image/catalog/category/skameyki/Konstruktor/skameyka-konstruktor-02.jpg", "10110.2")
+    print(name_message("11013"))
     # print(message("Sergey"))
+    # print(information())
