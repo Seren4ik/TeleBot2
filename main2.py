@@ -2,9 +2,12 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import Command, Text
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.types import CallbackQuery
+
 from config import TOKEN
 import asyncio
 import keyboard as kb
+from keyboards.inline.choise_buttons import choice, cancel
 from valid_time import valid, valid2
 from valid_start_project import valid_start
 import Db1
@@ -52,14 +55,14 @@ async def send_menu(message: types.Message):
                              /help -- увидеть это сообщение
                              /start_project -- Начать проект 
                              /end_project -- Закончить проект 
-                             /view_projects -- Показать проекты
+                             /view_projects -- Количество проектов 
                              /find_a_project -- Найти проект по имени или артикулу
                              /delete_project -- Удалить проект 
                              /note -- Примечание по проекту
-                             /add_image -- Вставить картнику
+                             /add_image -- Вставить картинку
                              /reminders -- Запустить периодичное напоминание
                              /stop -- остановить таймер
-                             ''', reply=False, reply_markup=kb.greet_kb)
+                             ''', reply=False, reply_markup=choice)
 
 
 @dp.message_handler(commands=['start'])
@@ -72,21 +75,28 @@ async def send_welcome(message: types.Message):
 """___________Сохранение начала проекта________________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['start_project'], state=None)
-async def start_project(message: types.Message):
+@dp.callback_query_handler(text="start_project", user_id=id_admin)
+# @dp.message_handler(user_id=id_admin, commands=['start_project'], state=None)
+# async def start_project(message: types.Message,):
+async def start_project(call: CallbackQuery):
     """Начать проект"""
-    await message.answer("<b>Вы начинаете проект. Введите артикул и название в формате(Артикул-название): </b>")
+    await call.answer(cache_time=60)
+    await call.message.answer("<b>Вы начинаете проект. Введите артикул и название в формате(Артикул-название): </b>",
+                              reply_markup=cancel)
     await project.first()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
+    await call.answer(cache_time=60)
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>')
+    await call.answer('<b>Данные не сохранены</b>',show_alert=True)
     await state.finish()
 
 
@@ -132,21 +142,24 @@ async def start_project1(message: types.Message, state: FSMContext):
 """______________________Сохранение окончания проекта_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['end_project'], state=None)
-async def end_project(message: types.Message):
+@dp.callback_query_handler(text="end_project")
+# @dp.message_handler(user_id=id_admin, commands=['end_project'], state=None)
+# async def end_project(message: types.Message):
+async def end_project(call: CallbackQuery):
     """Закончить проект"""
-    await message.answer("<b>Вы заканчиваете проект. Введите артикул: </b>")
+    await call.message.answer("<b>Вы заканчиваете проект. Введите артикул: </b>", reply_markup=cancel)
     await project.last()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>', reply_markup=choice)
     await state.finish()
 
 
@@ -163,7 +176,7 @@ async def end_project1(message: types.Message, state: FSMContext):
             p.append(i[0])
 
     if len(p) > 0:
-        await message.answer(f"<b>Вы завершили проект: {code_name} </b>")
+        await message.answer(f"<b>Вы завершили проект: {code_name} </b>", reply_markup=choice)
         await state.update_data(code_name=code_name)
 
         Db1.update_data(
@@ -180,21 +193,24 @@ async def end_project1(message: types.Message, state: FSMContext):
 """______________________Удалить проект_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['delete_project'], state=None)
-async def delete_project(message: types.Message):
+@dp.callback_query_handler(text="delete_project")
+# @dp.message_handler(user_id=id_admin, commands=['delete_project'], state=None)
+# async def delete_project(message: types.Message):
+async def delete_project(call: CallbackQuery):
     """Удалить проект"""
-    await message.answer("<b>Вы хотите удалить проект. Введите артикул: </b>")
+    await call.message.answer("<b>Вы хотите удалить проект. Введите артикул: </b>", reply_markup=cancel)
     await delproject.next()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>', reply_markup=choice)
     await state.finish()
 
 
@@ -223,37 +239,37 @@ async def delete_project1(message: types.Message, state: FSMContext):
 """______________________Найти проект по имени или артикулу_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['find_a_project'], state=None)
-async def find_a_project(message: types.Message):
+@dp.callback_query_handler(text="find_a_project")
+# @dp.message_handler(user_id=id_admin, commands=['find_a_project'], state=None)
+# async def find_a_project(message: types.Message):
+async def find_a_project(call: CallbackQuery):
     """Найти проект"""
-    await message.answer("<b>Вы хотите найти проект. Введите артикул или название: </b>")
+    await call.message.answer("<b>Вы хотите найти проект. Введите артикул или название: </b>", reply_markup=cancel)
     await Find_project.next()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>', reply_markup=choice)
     await state.finish()
 
 
 @dp.message_handler(state=Find_project.F1)
 async def find_project1(message: types.Message, state: FSMContext):
     """Второй вопрос, завершение опроса"""
-    projects = Db1.list_message("Sergey")
+
     project1 = message.text
-    p = []
-    for i in projects:
-        if project1 in i[1] or project1 in i[0]:
-            p.append(i)
+    p = Db1.name_message(project1)
 
     if len(p):
-        p1 = sorted(p, key=lambda project2: project2[2])
-        for i in p1:
+        # p1 = sorted(p, key=lambda project2: project2[2])
+        for i in p:
             await asyncio.sleep(1)
             photo1 = i[-1]
             try:
@@ -267,7 +283,7 @@ async def find_project1(message: types.Message, state: FSMContext):
                 await message.answer_photo(photo=photo1)
             except:
                 continue
-        await message.answer(f'<b>Проектов: {len(p)}</b>')
+        await message.answer(f'<b>Проектов: {len(p)}</b>', reply_markup=choice)
         await state.finish()
     else:
         await message.answer("<b>Проект не найден, попробуйте еще раз</b>")
@@ -276,21 +292,24 @@ async def find_project1(message: types.Message, state: FSMContext):
 """______________________Внести примечание в проект_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['note'], state=None)
-async def note_project(message: types.Message):
+@dp.callback_query_handler(text="note")
+# @dp.message_handler(user_id=id_admin, commands=['note'], state=None)
+# async def note_project(message: types.Message):
+async def note_project(call: CallbackQuery):
     """Внести примечание в проект"""
-    await message.answer("<b>Вы хотите внести примечание в проект. Введите артикул: </b>")
+    await call.message.answer("<b>Вы хотите внести примечание в проект. Введите артикул: </b>", reply_markup=cancel)
     await Note_project.next()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>', reply_markup=choice)
     await state.finish()
 
 
@@ -333,21 +352,24 @@ async def note_project2(message: types.Message, state: FSMContext):
 """______________________Добавить картинку в проект_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['add_image'], state=None)
-async def add_image(message: types.Message):
+@dp.callback_query_handler(text="add_image")
+# @dp.message_handler(user_id=id_admin, commands=['add_image'], state=None)
+# async def add_image(message: types.Message):
+async def add_image(call: CallbackQuery):
     """Добавить картинку в проект"""
-    await message.answer("<b>Вы хотите добавить картинку в проект. Введите артикул: </b>")
+    await call.message.answer("<b>Вы хотите добавить картинку в проект. Введите артикул: </b>", reply_markup=cancel)
     await Add_image.next()
 
 
-@dp.message_handler(state='*', commands=['cancel'])
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(Text(equals='cancel', ignore_case=True), state='*')
+# @dp.message_handler(state='*', commands=['cancel'])
+# @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(call: CallbackQuery, state: FSMContext):
     """Отменить ввод данных"""
     current_state = await state.get_state()
     if current_state is None:
         return
-    await message.answer('<b>Данные не сохранены</b>')
+    await call.message.answer('<b>Данные не сохранены</b>', reply_markup=choice)
     await state.finish()
 
 
@@ -385,25 +407,27 @@ async def add_image2(message: types.Message, state: FSMContext):
     project1 = Db1.name_message(code_name1)
     for i in project1:
         await message.answer(f"<b>{i[0:-1]} </b>")
-        await message.answer_photo(photo=i[-1])
+        await message.answer_photo(photo=i[-1], reply_markup=choice)
 
     await state.finish()
 
 
-"""______________________Посмотреть проекты_________________________________________________________________"""
+"""______________________Посмотреть количество проектов, все проекты_________________________________________________________________"""
 
 
-@dp.message_handler(user_id=id_admin, commands=['view_projects'])
-async def view_projects(message: types.Message):
+@dp.callback_query_handler(text="view_projects", user_id=id_admin)
+# @dp.message_handler(user_id=id_admin, commands=['view_projects'])
+async def view_projects(call: CallbackQuery):
     """Посмотреть проекты"""
+    await call.answer(cache_time=60)
     projects = Db1.list_message("Sergey")
     projects1 = sorted(projects, key=lambda project2: project2[2])
     date1 = projects1[0][2]
     count_projects = 0
     for i in projects1:
         count_projects += 1
-        await message.answer(f"<b>{i[0:-1]}</b>")
-    await message.answer(f"<b>Количество проектов начиная с {date1} : {count_projects}</b>")
+        # await message.answer(f"<b>{i[0:-1]}</b>")
+    await call.message.answer(f"<b>Количество проектов начиная с {date1} : {count_projects}</b>")
 
 
 """__________________________Напоминания________________________________________________________________"""
@@ -475,7 +499,7 @@ async def sms(text):
 
 def main():
     executor.start_polling(
-        dispatcher=dp, )
+        dispatcher=dp,)
 
 
 if __name__ == "__main__":

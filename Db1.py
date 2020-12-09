@@ -107,8 +107,8 @@ def name_message(name):
     con = connect_db()
     c = con.cursor()
     c.execute(
-        f"SELECT code_name, text_start, time_start, text_and, time_and, note, images FROM user_project where text_start like '%{name}'"
-        f" or code_name like '%{name}' ")
+        f"SELECT code_name, text_start, time_start, text_and, time_and, note, images FROM user_project where text_start like '%{name}%'"
+        f" or code_name like '%{name}%' order by (time_start)")
     quantity = c.fetchall()
     return quantity
 
@@ -141,11 +141,11 @@ def date(first_name):
 
 if __name__ == '__main__':
     '''init_db()'''
-    # delete_message("10046")
-    # add_message(1268358424,'Sergey', '10046', 'Скамейка Урсула', '2020.08.03-12:17', 'Завершен', '2020.08.04-10:44')
+    # delete_message("382.6")
+    # add_message(1268358424, 'Sergey', '562.1', 'Ограждение кондиционера ', ' ', '2020.01.12-12:17', '', '' )
     # print(list_message("Sergey"))
     # add_column()
-    # image_data("https://adanatgroup.ru/image/catalog/category/skameyki/Konstruktor/skameyka-konstruktor-02.jpg", "10110.2")
-    print(name_message("11013"))
+    # image_data("https://adanatgroup.ru/image/catalog/category/ploshadki-dlya-musora/panel1.jpg", "kp.002")
+    # print(name_message("площадка"))
     # print(message("Sergey"))
     # print(information())
