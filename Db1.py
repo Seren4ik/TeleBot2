@@ -4,11 +4,11 @@ import psycopg2
 def connect_db():
     """Подключение к базе данных"""
     con = psycopg2.connect(
-        database="d5ooudpafo8gka",
-        user="xepxpqywxklads",
-        password="56d9d97426002b5c458acf4847dd36e3c149131255887e0687d875d38b3c102e",
-        host="ec2-107-22-33-173.compute-1.amazonaws.com",
-        port="5432")
+        database=,
+        user=,
+        password=,
+        host=,
+        port=)
     return con
 
 
